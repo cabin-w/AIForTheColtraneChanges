@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>The Coltrane Changes 可视化分析</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1E1E2E;
+            --secondary: #2A2A3A;
+            --accent: #6CD4FF;
+            --text: #F0F4FC;
+            --glass: rgba(255, 255, 255, 0.02);
+            --gradient: linear-gradient(145deg, #6CD4FF, #8AE2FF);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        #container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        #circle-canvas {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            margin: 2rem auto;
+            display: block;
+            background: var(--secondary);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        #controls {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            margin: 2rem 0;
+        }
+
+        #info-panel {
+            background: var(--glass);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        button {
+            background: var(--gradient);
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            color: rgba(0, 0, 0, 0.9);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(108, 212, 255, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(108, 212, 255, 0.4);
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        h3::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        #progression-path {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+            letter-spacing: -0.3px;
+        }
+
+        audio {
+            width: 280px;
+            border-radius: 8px;
+            background: var(--glass);
+        }
+
+        audio::-webkit-media-controls-panel {
+            background: var(--glass);
+        }
+
+        audio::-webkit-media-controls-enclosure {
+            display: none !important;
+        }
+
+        audio::-webkit-media-controls {
+            display: none !important;
+        }
+
+        #description {
+            background: var(--glass);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            margin-top: 2rem;
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        #description h2 {
+            margin-bottom: 1rem;
+        }
+
+        #description p {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+        }
+
+        #description pre {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <audio id="audio-player" crossorigin="anonymous">
+            <source src="giant_steps.mp3" type="audio/mpeg">
+            您的浏览器不支持音频播放
+        </audio>
+
+        <canvas id="circle-canvas" width="600" height="600"></canvas>
+
+        <div id="controls">
+            <button onclick="togglePlay()">▶ 播放/暂停</button>
+        </div>
+
+        <div id="info-panel">
+            <h3><span id="current-key" class="highlight">-</span></h3>
+            <p>已播放时间：<span id="current-time">0.00</span>秒</p>
+            <p>路径：<span id="progression-path">等待开始...</span></p>
+        </div>
+
+        <div id="description">
+            <h2>The Coltrane Changes</h2>
+            <p>1959年，爵士乐最受尊崇的萨克斯手之一John Coltrane发布了Giant Steps。构成整首歌曲的和弦进程后来被称为"Coltrane Changes"(科川变换)。</p>
+            <p>在整个音乐界，它是即兴演奏中公认最富挑战性的和弦进程之一。之所以让人闻风丧胆，有两点原因：一是这个和弦进行的演奏速度非常快（接近300bpm），二是它横跨了三个调。Giant
+                Steps这首歌难度极高，初版录音中负责弹奏钢琴的Tommy Flanagan，在Coltrane开始吹奏之前，甚至无法从容完成自己的演奏。</p>
+            <h2>调性与和弦分析算法</h2>
+            <p>算法旨在对爵士乐进行和弦进行分析和识别。节奏分析模块利用动态阈值检测实现节拍跟踪，精确计算BPM值，并生成节拍点时间轴标记作为和弦切换的候选点。特征提取部分综合运用了色度特征（Chroma
+                CQT）、梅尔倒谱系数（MFCC）和音调空间坐标（Tonnetz），以捕捉音乐的和声、音色和调性等多维（32维）信息。随后，通过Z-score归一化和PCA降维优化特征，保留关键信息的同时降低计算复杂度。无监督聚类采用K-Means算法将特征向量聚为12类，对应12个调性中心，并通过CLUSTER_MAP将聚类标签映射到具体的调性和弦组合。动态映射模块将节拍点时间转换为音频帧索引，实时匹配调性和和弦，生成带时间戳的和弦切换序列。最后，结合音乐理论，预设12个调性及其关联的典型爵士和弦，以实现和弦进行的准确映射。
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ========== 配置参数 ==========
+        const CIRCLE_CONFIG = {
+            radius: 250,
+            center: { x: 300, y: 300 },
+            keys: ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'Db', 'Ab', 'Eb', 'Bb', 'F'],
+            colors: {
+                active: '#6CD4FF',
+                inactive: 'rgba(255,255,255,0.1)'
+            }
+        };
+
+        // ========== 和弦时间轴 ==========
+        const CHORD_CHANGES = [
+            { time: 0.20, key: 'Eb', chord: 'Ebmaj7' },
+            { time: 0.62, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 1.03, key: 'Db', chord: 'Dbmaj7' },
+            { time: 1.45, key: 'Ab', chord: 'Abmaj7' },
+            { time: 1.87, key: 'F#', chord: 'F#maj7' },
+            { time: 2.26, key: 'A', chord: 'Amaj7' },
+            { time: 2.69, key: 'E', chord: 'Emaj7' },
+            { time: 3.13, key: 'Db', chord: 'Dbmaj7' },
+            { time: 3.54, key: 'F#', chord: 'F#maj7' },
+            { time: 3.99, key: 'Ab', chord: 'Abmaj7' },
+            { time: 4.42, key: 'F#', chord: 'F#maj7' },
+            { time: 4.84, key: 'A', chord: 'Amaj7' },
+            { time: 5.25, key: 'G', chord: 'Gmaj7' },
+            { time: 5.67, key: 'B', chord: 'Bmaj7' },
+            { time: 6.11, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 6.52, key: 'F#', chord: 'F#maj7' },
+            { time: 6.94, key: 'D', chord: 'Dmaj7' },
+            { time: 7.35, key: 'A', chord: 'Amaj7' },
+            { time: 7.77, key: 'D', chord: 'Dmaj7' },
+            { time: 8.17, key: 'Db', chord: 'Dbmaj7' },
+            { time: 8.59, key: 'E', chord: 'Emaj7' },
+            { time: 8.96, key: 'F#', chord: 'F#maj7' },
+            { time: 9.33, key: 'Db', chord: 'Dbmaj7' },
+            { time: 9.75, key: 'Ab', chord: 'Abmaj7' },
+            { time: 10.16, key: 'G', chord: 'Gmaj7' },
+            { time: 10.58, key: 'G', chord: 'Gmaj7' },
+            { time: 10.97, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 11.39, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 11.81, key: 'Ab', chord: 'Abmaj7' },
+            { time: 12.24, key: 'A', chord: 'Amaj7' },
+            { time: 12.68, key: 'Ab', chord: 'Abmaj7' },
+            { time: 13.13, key: 'G', chord: 'Gmaj7' },
+            { time: 13.51, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 13.99, key: 'G', chord: 'Gmaj7' },
+            { time: 14.40, key: 'Db', chord: 'Dbmaj7' },
+            { time: 14.85, key: 'F', chord: 'Fmaj7' },
+            { time: 15.26, key: 'F#', chord: 'F#maj7' },
+            { time: 15.65, key: 'F', chord: 'Fmaj7' },
+            { time: 16.13, key: 'Ab', chord: 'Abmaj7' },
+            { time: 16.57, key: 'Db', chord: 'Dbmaj7' },
+            { time: 16.99, key: 'F#', chord: 'F#maj7' },
+            { time: 17.43, key: 'E', chord: 'Emaj7' },
+            { time: 17.83, key: 'F#', chord: 'F#maj7' },
+            { time: 18.27, key: 'A', chord: 'Amaj7' },
+            { time: 18.69, key: 'G', chord: 'Gmaj7' },
+            { time: 19.06, key: 'G', chord: 'Gmaj7' },
+            { time: 19.46, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 19.90, key: 'B', chord: 'Bmaj7' },
+            { time: 20.32, key: 'Ab', chord: 'Abmaj7' },
+            { time: 20.76, key: 'A', chord: 'Amaj7' },
+            { time: 21.16, key: 'F', chord: 'Fmaj7' },
+            { time: 21.58, key: 'A', chord: 'Amaj7' },
+            { time: 21.99, key: 'Db', chord: 'Dbmaj7' },
+            { time: 22.40, key: 'E', chord: 'Emaj7' },
+            { time: 22.80, key: 'Db', chord: 'Dbmaj7' },
+            { time: 23.23, key: 'Ab', chord: 'Abmaj7' },
+            { time: 23.65, key: 'G', chord: 'Gmaj7' },
+            { time: 24.08, key: 'G', chord: 'Gmaj7' },
+            { time: 24.49, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 24.90, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 25.32, key: 'Ab', chord: 'Abmaj7' },
+            { time: 25.73, key: 'F', chord: 'Fmaj7' },
+            { time: 26.16, key: 'E', chord: 'Emaj7' },
+            { time: 26.55, key: 'G', chord: 'Gmaj7' },
+            { time: 26.98, key: 'B', chord: 'Bmaj7' },
+            { time: 27.39, key: 'G', chord: 'Gmaj7' },
+            { time: 27.77, key: 'G', chord: 'Gmaj7' },
+            { time: 28.15, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 28.53, key: 'Ab', chord: 'Abmaj7' },
+            { time: 28.93, key: 'F', chord: 'Fmaj7' },
+            { time: 29.35, key: 'F', chord: 'Fmaj7' },
+            { time: 29.74, key: 'A', chord: 'Amaj7' },
+            { time: 30.15, key: 'Db', chord: 'Dbmaj7' },
+            { time: 30.58, key: 'Db', chord: 'Dbmaj7' },
+            { time: 31.00, key: 'Ab', chord: 'Abmaj7' },
+            { time: 31.39, key: 'F', chord: 'Fmaj7' },
+            { time: 31.80, key: 'F', chord: 'Fmaj7' },
+            { time: 32.21, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 32.61, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 33.03, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 33.45, key: 'Ab', chord: 'Abmaj7' },
+            { time: 33.85, key: 'F', chord: 'Fmaj7' },
+            { time: 34.26, key: 'F', chord: 'Fmaj7' },
+            { time: 34.68, key: 'A', chord: 'Amaj7' },
+            { time: 35.10, key: 'Db', chord: 'Dbmaj7' },
+            { time: 35.50, key: 'Db', chord: 'Dbmaj7' },
+            { time: 35.92, key: 'E', chord: 'Emaj7' },
+            { time: 36.34, key: 'E', chord: 'Emaj7' },
+            { time: 36.75, key: 'G', chord: 'Gmaj7' },
+            { time: 37.15, key: 'G', chord: 'Gmaj7' },
+            { time: 37.57, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 37.99, key: 'B', chord: 'Bmaj7' },
+            { time: 38.41, key: 'Ab', chord: 'Abmaj7' },
+            { time: 38.81, key: 'D', chord: 'Dmaj7' },
+            { time: 39.23, key: 'E', chord: 'Emaj7' },
+            { time: 39.65, key: 'F', chord: 'Fmaj7' },
+            { time: 40.07, key: 'G', chord: 'Gmaj7' },
+            { time: 40.39, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 40.70, key: 'B', chord: 'Bmaj7' },
+            { time: 41.11, key: 'Db', chord: 'Dbmaj7' },
+            { time: 41.52, key: 'E', chord: 'Emaj7' },
+            { time: 41.90, key: 'B', chord: 'Bmaj7' },
+            { time: 42.32, key: 'F', chord: 'Fmaj7' },
+            { time: 42.77, key: 'Ab', chord: 'Abmaj7' },
+            { time: 43.19, key: 'Db', chord: 'Dbmaj7' },
+            { time: 43.58, key: 'F#', chord: 'F#maj7' },
+            { time: 43.98, key: 'E', chord: 'Emaj7' },
+            { time: 44.35, key: 'B', chord: 'Bmaj7' },
+            { time: 44.72, key: 'B', chord: 'Bmaj7' },
+            { time: 45.14, key: 'F', chord: 'Fmaj7' },
+            { time: 45.53, key: 'G', chord: 'Gmaj7' },
+            { time: 45.87, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 46.23, key: 'B', chord: 'Bmaj7' },
+            { time: 46.63, key: 'D', chord: 'Dmaj7' },
+            { time: 47.07, key: 'F', chord: 'Fmaj7' },
+            { time: 47.48, key: 'F', chord: 'Fmaj7' },
+            { time: 47.90, key: 'A', chord: 'Amaj7' },
+            { time: 48.32, key: 'Ab', chord: 'Abmaj7' },
+            { time: 48.73, key: 'F#', chord: 'F#maj7' },
+            { time: 49.13, key: 'G', chord: 'Gmaj7' },
+            { time: 49.54, key: 'E', chord: 'Emaj7' },
+            { time: 49.93, key: 'G', chord: 'Gmaj7' },
+            { time: 50.34, key: 'G', chord: 'Gmaj7' },
+            { time: 50.76, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 51.17, key: 'B', chord: 'Bmaj7' },
+            { time: 51.58, key: 'Ab', chord: 'Abmaj7' },
+            { time: 51.99, key: 'Db', chord: 'Dbmaj7' },
+            { time: 52.41, key: 'D', chord: 'Dmaj7' },
+            { time: 52.84, key: 'A', chord: 'Amaj7' },
+            { time: 53.17, key: 'B', chord: 'Bmaj7' },
+            { time: 53.52, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 53.88, key: 'B', chord: 'Bmaj7' },
+            { time: 54.28, key: 'Db', chord: 'Dbmaj7' },
+            { time: 54.62, key: 'B', chord: 'Bmaj7' },
+            { time: 55.02, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 55.43, key: 'F', chord: 'Fmaj7' },
+            { time: 55.84, key: 'F', chord: 'Fmaj7' },
+            { time: 56.25, key: 'C', chord: 'Cmaj7' },
+            { time: 56.76, key: 'Db', chord: 'Dbmaj7' },
+            { time: 57.18, key: 'Ab', chord: 'Abmaj7' },
+            { time: 57.60, key: 'F#', chord: 'F#maj7' },
+            { time: 58.00, key: 'A', chord: 'Amaj7' },
+            { time: 58.42, key: 'F#', chord: 'F#maj7' },
+            { time: 58.82, key: 'G', chord: 'Gmaj7' },
+            { time: 59.18, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 59.56, key: 'B', chord: 'Bmaj7' },
+            { time: 60.00, key: 'D', chord: 'Dmaj7' },
+            { time: 60.36, key: 'Db', chord: 'Dbmaj7' },
+            { time: 60.72, key: 'D', chord: 'Dmaj7' },
+            { time: 61.13, key: 'A', chord: 'Amaj7' },
+            { time: 61.54, key: 'Db', chord: 'Dbmaj7' },
+            { time: 61.96, key: 'Db', chord: 'Dbmaj7' },
+            { time: 62.39, key: 'E', chord: 'Emaj7' },
+            { time: 62.79, key: 'E', chord: 'Emaj7' },
+            { time: 63.19, key: 'C', chord: 'Cmaj7' },
+            { time: 63.63, key: 'G', chord: 'Gmaj7' },
+            { time: 64.05, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 64.48, key: 'B', chord: 'Bmaj7' },
+            { time: 64.89, key: 'Ab', chord: 'Abmaj7' },
+            { time: 65.31, key: 'B', chord: 'Bmaj7' },
+            { time: 65.71, key: 'D', chord: 'Dmaj7' },
+            { time: 66.12, key: 'D', chord: 'Dmaj7' },
+            { time: 66.54, key: 'G', chord: 'Gmaj7' },
+            { time: 66.95, key: 'G', chord: 'Gmaj7' },
+            { time: 67.36, key: 'B', chord: 'Bmaj7' },
+            { time: 67.77, key: 'F#', chord: 'F#maj7' },
+            { time: 68.17, key: 'E', chord: 'Emaj7' },
+            { time: 68.59, key: 'F', chord: 'Fmaj7' },
+            { time: 68.99, key: 'B', chord: 'Bmaj7' },
+            { time: 69.40, key: 'A', chord: 'Amaj7' },
+            { time: 69.82, key: 'B', chord: 'Bmaj7' },
+            { time: 70.24, key: 'C', chord: 'Cmaj7' },
+            { time: 70.65, key: 'E', chord: 'Emaj7' },
+            { time: 71.06, key: 'F', chord: 'Fmaj7' },
+            { time: 71.48, key: 'F', chord: 'Fmaj7' },
+            { time: 71.89, key: 'G', chord: 'Gmaj7' },
+            { time: 72.31, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 72.72, key: 'B', chord: 'Bmaj7' },
+            { time: 73.13, key: 'D', chord: 'Dmaj7' },
+            { time: 73.54, key: 'Db', chord: 'Dbmaj7' },
+            { time: 73.96, key: 'D', chord: 'Dmaj7' },
+            { time: 74.36, key: 'Ab', chord: 'Abmaj7' },
+            { time: 74.77, key: 'Db', chord: 'Dbmaj7' },
+            { time: 75.17, key: 'Db', chord: 'Dbmaj7' },
+            { time: 75.59, key: 'D', chord: 'Dmaj7' },
+            { time: 76.01, key: 'D', chord: 'Dmaj7' },
+            { time: 76.37, key: 'B', chord: 'Bmaj7' },
+            { time: 76.82, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 77.24, key: 'B', chord: 'Bmaj7' },
+            { time: 77.66, key: 'B', chord: 'Bmaj7' },
+            { time: 78.07, key: 'Ab', chord: 'Abmaj7' },
+            { time: 78.47, key: 'D', chord: 'Dmaj7' },
+            { time: 78.89, key: 'D', chord: 'Dmaj7' },
+            { time: 79.31, key: 'A', chord: 'Amaj7' },
+            { time: 79.73, key: 'G', chord: 'Gmaj7' },
+            { time: 80.13, key: 'B', chord: 'Bmaj7' },
+            { time: 80.55, key: 'G', chord: 'Gmaj7' },
+            { time: 80.97, key: 'E', chord: 'Emaj7' },
+            { time: 81.33, key: 'E', chord: 'Emaj7' },
+            { time: 81.70, key: 'F', chord: 'Fmaj7' },
+            { time: 82.07, key: 'A', chord: 'Amaj7' },
+            { time: 82.44, key: 'Ab', chord: 'Abmaj7' },
+            { time: 82.85, key: 'C', chord: 'Cmaj7' },
+            { time: 83.21, key: 'E', chord: 'Emaj7' },
+            { time: 83.62, key: 'Db', chord: 'Dbmaj7' },
+            { time: 84.03, key: 'E', chord: 'Emaj7' },
+            { time: 84.45, key: 'B', chord: 'Bmaj7' },
+            { time: 84.87, key: 'F', chord: 'Fmaj7' },
+            { time: 85.30, key: 'G', chord: 'Gmaj7' },
+            { time: 85.72, key: 'B', chord: 'Bmaj7' },
+            { time: 86.13, key: 'F#', chord: 'F#maj7' },
+            { time: 86.56, key: 'D', chord: 'Dmaj7' },
+            { time: 86.97, key: 'Db', chord: 'Dbmaj7' },
+            { time: 87.40, key: 'D', chord: 'Dmaj7' },
+            { time: 87.82, key: 'C', chord: 'Cmaj7' },
+            { time: 88.22, key: 'Db', chord: 'Dbmaj7' },
+            { time: 88.65, key: 'Db', chord: 'Dbmaj7' },
+            { time: 89.09, key: 'Db', chord: 'Dbmaj7' },
+            { time: 89.50, key: 'D', chord: 'Dmaj7' },
+            { time: 89.94, key: 'B', chord: 'Bmaj7' },
+            { time: 90.37, key: 'B', chord: 'Bmaj7' },
+            { time: 90.79, key: 'F', chord: 'Fmaj7' },
+            { time: 91.22, key: 'B', chord: 'Bmaj7' },
+            { time: 91.63, key: 'Ab', chord: 'Abmaj7' },
+            { time: 92.06, key: 'Db', chord: 'Dbmaj7' },
+            { time: 92.49, key: 'D', chord: 'Dmaj7' },
+            { time: 92.88, key: 'B', chord: 'Bmaj7' },
+            { time: 93.25, key: 'B', chord: 'Bmaj7' },
+            { time: 93.62, key: 'G', chord: 'Gmaj7' },
+            { time: 94.03, key: 'G', chord: 'Gmaj7' },
+            { time: 94.46, key: 'E', chord: 'Emaj7' },
+            { time: 94.88, key: 'E', chord: 'Emaj7' },
+            { time: 95.29, key: 'F', chord: 'Fmaj7' },
+            { time: 95.72, key: 'F', chord: 'Fmaj7' },
+            { time: 96.14, key: 'C', chord: 'Cmaj7' },
+            { time: 96.56, key: 'Db', chord: 'Dbmaj7' },
+            { time: 96.98, key: 'E', chord: 'Emaj7' },
+            { time: 97.38, key: 'E', chord: 'Emaj7' },
+            { time: 97.80, key: 'F', chord: 'Fmaj7' },
+            { time: 98.21, key: 'B', chord: 'Bmaj7' },
+            { time: 98.63, key: 'G', chord: 'Gmaj7' },
+            { time: 99.04, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 99.46, key: 'B', chord: 'Bmaj7' },
+            { time: 99.85, key: 'D', chord: 'Dmaj7' },
+            { time: 100.26, key: 'D', chord: 'Dmaj7' },
+            { time: 100.69, key: 'D', chord: 'Dmaj7' },
+            { time: 101.11, key: 'A', chord: 'Amaj7' },
+            { time: 101.52, key: 'Db', chord: 'Dbmaj7' },
+            { time: 101.92, key: 'B', chord: 'Bmaj7' },
+            { time: 102.33, key: 'B', chord: 'Bmaj7' },
+            { time: 102.74, key: 'D', chord: 'Dmaj7' },
+            { time: 103.14, key: 'B', chord: 'Bmaj7' },
+            { time: 103.57, key: 'G', chord: 'Gmaj7' },
+            { time: 103.98, key: 'B', chord: 'Bmaj7' },
+            { time: 104.39, key: 'G', chord: 'Gmaj7' },
+            { time: 104.71, key: 'B', chord: 'Bmaj7' },
+            { time: 105.14, key: 'D', chord: 'Dmaj7' },
+            { time: 105.55, key: 'B', chord: 'Bmaj7' },
+            { time: 105.96, key: 'D', chord: 'Dmaj7' },
+            { time: 106.32, key: 'B', chord: 'Bmaj7' },
+            { time: 106.68, key: 'B', chord: 'Bmaj7' },
+            { time: 107.09, key: 'F', chord: 'Fmaj7' },
+            { time: 107.47, key: 'Db', chord: 'Dbmaj7' },
+            { time: 107.86, key: 'E', chord: 'Emaj7' },
+            { time: 108.26, key: 'D', chord: 'Dmaj7' },
+            { time: 108.68, key: 'E', chord: 'Emaj7' },
+            { time: 109.09, key: 'C', chord: 'Cmaj7' },
+            { time: 109.49, key: 'B', chord: 'Bmaj7' },
+            { time: 109.91, key: 'Db', chord: 'Dbmaj7' },
+            { time: 110.33, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 110.71, key: 'Db', chord: 'Dbmaj7' },
+            { time: 111.05, key: 'F#', chord: 'F#maj7' },
+            { time: 111.46, key: 'A', chord: 'Amaj7' },
+            { time: 111.87, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 112.28, key: 'B', chord: 'Bmaj7' },
+            { time: 112.70, key: 'B', chord: 'Bmaj7' },
+            { time: 113.12, key: 'Ab', chord: 'Abmaj7' },
+            { time: 113.53, key: 'Db', chord: 'Dbmaj7' },
+            { time: 113.94, key: 'D', chord: 'Dmaj7' },
+            { time: 114.37, key: 'A', chord: 'Amaj7' },
+            { time: 114.78, key: 'E', chord: 'Emaj7' },
+            { time: 115.19, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 115.60, key: 'D', chord: 'Dmaj7' },
+            { time: 116.02, key: 'D', chord: 'Dmaj7' },
+            { time: 116.40, key: 'B', chord: 'Bmaj7' },
+            { time: 116.85, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 117.27, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 117.68, key: 'B', chord: 'Bmaj7' },
+            { time: 118.09, key: 'D', chord: 'Dmaj7' },
+            { time: 118.50, key: 'Db', chord: 'Dbmaj7' },
+            { time: 118.93, key: 'D', chord: 'Dmaj7' },
+            { time: 119.35, key: 'A', chord: 'Amaj7' },
+            { time: 119.76, key: 'G', chord: 'Gmaj7' },
+            { time: 120.17, key: 'G', chord: 'Gmaj7' },
+            { time: 120.59, key: 'F', chord: 'Fmaj7' },
+            { time: 121.01, key: 'E', chord: 'Emaj7' },
+            { time: 121.41, key: 'Ab', chord: 'Abmaj7' },
+            { time: 121.80, key: 'B', chord: 'Bmaj7' },
+            { time: 122.21, key: 'B', chord: 'Bmaj7' },
+            { time: 122.66, key: 'Ab', chord: 'Abmaj7' },
+            { time: 123.08, key: 'Db', chord: 'Dbmaj7' },
+            { time: 123.50, key: 'Db', chord: 'Dbmaj7' },
+            { time: 123.90, key: 'E', chord: 'Emaj7' },
+            { time: 124.32, key: 'F', chord: 'Fmaj7' },
+            { time: 124.74, key: 'F', chord: 'Fmaj7' },
+            { time: 125.16, key: 'G', chord: 'Gmaj7' },
+            { time: 125.59, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 126.03, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 126.41, key: 'Ab', chord: 'Abmaj7' },
+            { time: 126.79, key: 'D', chord: 'Dmaj7' },
+            { time: 127.20, key: 'D', chord: 'Dmaj7' },
+            { time: 127.67, key: 'Ab', chord: 'Abmaj7' },
+            { time: 128.10, key: 'Db', chord: 'Dbmaj7' },
+            { time: 128.55, key: 'Db', chord: 'Dbmaj7' },
+            { time: 128.89, key: 'D', chord: 'Dmaj7' },
+            { time: 129.38, key: 'D', chord: 'Dmaj7' },
+            { time: 129.82, key: 'B', chord: 'Bmaj7' },
+            { time: 130.24, key: 'F', chord: 'Fmaj7' },
+            { time: 130.66, key: 'F', chord: 'Fmaj7' },
+            { time: 131.08, key: 'B', chord: 'Bmaj7' },
+            { time: 131.48, key: 'F#', chord: 'F#maj7' },
+            { time: 131.84, key: 'B', chord: 'Bmaj7' },
+            { time: 132.26, key: 'D', chord: 'Dmaj7' },
+            { time: 132.75, key: 'E', chord: 'Emaj7' },
+            { time: 133.17, key: 'C', chord: 'Cmaj7' },
+            { time: 133.58, key: 'B', chord: 'Bmaj7' },
+            { time: 134.00, key: 'B', chord: 'Bmaj7' },
+            { time: 134.42, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 134.84, key: 'E', chord: 'Emaj7' },
+            { time: 135.27, key: 'F', chord: 'Fmaj7' },
+            { time: 135.70, key: 'F', chord: 'Fmaj7' },
+            { time: 136.12, key: 'A', chord: 'Amaj7' },
+            { time: 136.49, key: 'Db', chord: 'Dbmaj7' },
+            { time: 136.96, key: 'Db', chord: 'Dbmaj7' },
+            { time: 137.37, key: 'Db', chord: 'Dbmaj7' },
+            { time: 137.76, key: 'B', chord: 'Bmaj7' },
+            { time: 138.17, key: 'F', chord: 'Fmaj7' },
+            { time: 138.62, key: 'G', chord: 'Gmaj7' },
+            { time: 139.04, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 139.45, key: 'B', chord: 'Bmaj7' },
+            { time: 139.85, key: 'Ab', chord: 'Abmaj7' },
+            { time: 140.27, key: 'Db', chord: 'Dbmaj7' },
+            { time: 140.64, key: 'D', chord: 'Dmaj7' },
+            { time: 141.08, key: 'Ab', chord: 'Abmaj7' },
+            { time: 141.51, key: 'E', chord: 'Emaj7' },
+            { time: 141.93, key: 'E', chord: 'Emaj7' },
+            { time: 142.34, key: 'D', chord: 'Dmaj7' },
+            { time: 142.72, key: 'E', chord: 'Emaj7' },
+            { time: 143.16, key: 'C', chord: 'Cmaj7' },
+            { time: 143.57, key: 'G', chord: 'Gmaj7' },
+            { time: 143.98, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 144.38, key: 'B', chord: 'Bmaj7' },
+            { time: 144.80, key: 'Ab', chord: 'Abmaj7' },
+            { time: 145.21, key: 'Db', chord: 'Dbmaj7' },
+            { time: 145.62, key: 'D', chord: 'Dmaj7' },
+            { time: 146.05, key: 'E', chord: 'Emaj7' },
+            { time: 146.46, key: 'F', chord: 'Fmaj7' },
+            { time: 146.88, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 147.30, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 147.71, key: 'E', chord: 'Emaj7' },
+            { time: 148.12, key: 'E', chord: 'Emaj7' },
+            { time: 148.54, key: 'F', chord: 'Fmaj7' },
+            { time: 148.94, key: 'F', chord: 'Fmaj7' },
+            { time: 149.36, key: 'A', chord: 'Amaj7' },
+            { time: 149.77, key: 'Db', chord: 'Dbmaj7' },
+            { time: 150.18, key: 'Db', chord: 'Dbmaj7' },
+            { time: 150.58, key: 'Ab', chord: 'Abmaj7' },
+            { time: 150.96, key: 'F', chord: 'Fmaj7' },
+            { time: 151.41, key: 'F', chord: 'Fmaj7' },
+            { time: 151.81, key: 'G', chord: 'Gmaj7' },
+            { time: 152.23, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 152.65, key: 'F', chord: 'Fmaj7' },
+            { time: 153.05, key: 'D', chord: 'Dmaj7' },
+            { time: 153.46, key: 'D', chord: 'Dmaj7' },
+            { time: 153.84, key: 'D', chord: 'Dmaj7' },
+            { time: 154.28, key: 'F#', chord: 'F#maj7' },
+            { time: 154.69, key: 'Db', chord: 'Dbmaj7' },
+            { time: 155.11, key: 'E', chord: 'Emaj7' },
+            { time: 155.53, key: 'Ab', chord: 'Abmaj7' },
+            { time: 155.93, key: 'E', chord: 'Emaj7' },
+            { time: 156.35, key: 'G', chord: 'Gmaj7' },
+            { time: 156.76, key: 'B', chord: 'Bmaj7' },
+            { time: 157.18, key: 'B', chord: 'Bmaj7' },
+            { time: 157.58, key: 'G', chord: 'Gmaj7' },
+            { time: 157.94, key: 'D', chord: 'Dmaj7' },
+            { time: 158.35, key: 'D', chord: 'Dmaj7' },
+            { time: 158.74, key: 'B', chord: 'Bmaj7' },
+            { time: 159.17, key: 'Ab', chord: 'Abmaj7' },
+            { time: 159.60, key: 'B', chord: 'Bmaj7' },
+            { time: 160.07, key: 'G', chord: 'Gmaj7' },
+            { time: 160.48, key: 'G', chord: 'Gmaj7' },
+            { time: 160.90, key: 'E', chord: 'Emaj7' },
+            { time: 161.33, key: 'E', chord: 'Emaj7' },
+            { time: 161.73, key: 'F', chord: 'Fmaj7' },
+            { time: 162.13, key: 'F', chord: 'Fmaj7' },
+            { time: 162.55, key: 'E', chord: 'Emaj7' },
+            { time: 162.96, key: 'D', chord: 'Dmaj7' },
+            { time: 163.36, key: 'Db', chord: 'Dbmaj7' },
+            { time: 163.78, key: 'Ab', chord: 'Abmaj7' },
+            { time: 164.19, key: 'F', chord: 'Fmaj7' },
+            { time: 164.61, key: 'F', chord: 'Fmaj7' },
+            { time: 165.01, key: 'G', chord: 'Gmaj7' },
+            { time: 165.42, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 165.83, key: 'B', chord: 'Bmaj7' },
+            { time: 166.24, key: 'Ab', chord: 'Abmaj7' },
+            { time: 166.66, key: 'Db', chord: 'Dbmaj7' },
+            { time: 167.07, key: 'D', chord: 'Dmaj7' },
+            { time: 167.43, key: 'Ab', chord: 'Abmaj7' },
+            { time: 167.83, key: 'C', chord: 'Cmaj7' },
+            { time: 168.29, key: 'Db', chord: 'Dbmaj7' },
+            { time: 168.70, key: 'Db', chord: 'Dbmaj7' },
+            { time: 169.06, key: 'B', chord: 'Bmaj7' },
+            { time: 169.52, key: 'C', chord: 'Cmaj7' },
+            { time: 169.92, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 170.33, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 170.75, key: 'B', chord: 'Bmaj7' },
+            { time: 171.15, key: 'Ab', chord: 'Abmaj7' },
+            { time: 171.56, key: 'Db', chord: 'Dbmaj7' },
+            { time: 171.98, key: 'D', chord: 'Dmaj7' },
+            { time: 172.38, key: 'A', chord: 'Amaj7' },
+            { time: 172.79, key: 'B', chord: 'Bmaj7' },
+            { time: 173.19, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 173.58, key: 'B', chord: 'Bmaj7' },
+            { time: 174.00, key: 'E', chord: 'Emaj7' },
+            { time: 174.44, key: 'E', chord: 'Emaj7' },
+            { time: 174.86, key: 'F', chord: 'Fmaj7' },
+            { time: 175.26, key: 'F', chord: 'Fmaj7' },
+            { time: 175.68, key: 'A', chord: 'Amaj7' },
+            { time: 176.11, key: 'Db', chord: 'Dbmaj7' },
+            { time: 176.51, key: 'Db', chord: 'Dbmaj7' },
+            { time: 176.92, key: 'E', chord: 'Emaj7' },
+            { time: 177.33, key: 'F', chord: 'Fmaj7' },
+            { time: 177.73, key: 'F', chord: 'Fmaj7' },
+            { time: 178.13, key: 'G', chord: 'Gmaj7' },
+            { time: 178.55, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 178.96, key: 'F', chord: 'Fmaj7' },
+            { time: 179.36, key: 'Ab', chord: 'Abmaj7' },
+            { time: 179.76, key: 'D', chord: 'Dmaj7' },
+            { time: 180.16, key: 'F', chord: 'Fmaj7' },
+            { time: 180.57, key: 'D', chord: 'Dmaj7' },
+            { time: 180.98, key: 'D', chord: 'Dmaj7' },
+            { time: 181.38, key: 'E', chord: 'Emaj7' },
+            { time: 181.78, key: 'D', chord: 'Dmaj7' },
+            { time: 182.18, key: 'Ab', chord: 'Abmaj7' },
+            { time: 182.58, key: 'C', chord: 'Cmaj7' },
+            { time: 182.98, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 183.38, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 183.79, key: 'B', chord: 'Bmaj7' },
+            { time: 184.18, key: 'D', chord: 'Dmaj7' },
+            { time: 184.59, key: 'D', chord: 'Dmaj7' },
+            { time: 184.98, key: 'F', chord: 'Fmaj7' },
+            { time: 185.39, key: 'A', chord: 'Amaj7' },
+            { time: 185.79, key: 'C', chord: 'Cmaj7' },
+            { time: 186.20, key: 'G', chord: 'Gmaj7' },
+            { time: 186.61, key: 'G', chord: 'Gmaj7' },
+            { time: 187.01, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 187.41, key: 'E', chord: 'Emaj7' },
+            { time: 187.80, key: 'C', chord: 'Cmaj7' },
+            { time: 188.21, key: 'F', chord: 'Fmaj7' },
+            { time: 188.63, key: 'A', chord: 'Amaj7' },
+            { time: 189.03, key: 'Db', chord: 'Dbmaj7' },
+            { time: 189.43, key: 'Db', chord: 'Dbmaj7' },
+            { time: 189.82, key: 'E', chord: 'Emaj7' },
+            { time: 190.22, key: 'F', chord: 'Fmaj7' },
+            { time: 190.62, key: 'G', chord: 'Gmaj7' },
+            { time: 191.02, key: 'G', chord: 'Gmaj7' },
+            { time: 191.41, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 191.82, key: 'B', chord: 'Bmaj7' },
+            { time: 192.23, key: 'D', chord: 'Dmaj7' },
+            { time: 192.62, key: 'Db', chord: 'Dbmaj7' },
+            { time: 193.02, key: 'F', chord: 'Fmaj7' },
+            { time: 193.41, key: 'E', chord: 'Emaj7' },
+            { time: 193.81, key: 'D', chord: 'Dmaj7' },
+            { time: 194.20, key: 'E', chord: 'Emaj7' },
+            { time: 194.61, key: 'B', chord: 'Bmaj7' },
+            { time: 195.00, key: 'D', chord: 'Dmaj7' },
+            { time: 195.40, key: 'B', chord: 'Bmaj7' },
+            { time: 195.80, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 196.20, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 196.60, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 197.01, key: 'F#', chord: 'F#maj7' },
+            { time: 197.40, key: 'F', chord: 'Fmaj7' },
+            { time: 197.80, key: 'A', chord: 'Amaj7' },
+            { time: 198.19, key: 'A', chord: 'Amaj7' },
+            { time: 198.59, key: 'G', chord: 'Gmaj7' },
+            { time: 198.98, key: 'G', chord: 'Gmaj7' },
+            { time: 199.39, key: 'G', chord: 'Gmaj7' },
+            { time: 199.80, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 200.19, key: 'B', chord: 'Bmaj7' },
+            { time: 200.59, key: 'F', chord: 'Fmaj7' },
+            { time: 200.99, key: 'F', chord: 'Fmaj7' },
+            { time: 201.39, key: 'A', chord: 'Amaj7' },
+            { time: 201.78, key: 'Db', chord: 'Dbmaj7' },
+            { time: 202.19, key: 'Db', chord: 'Dbmaj7' },
+            { time: 202.58, key: 'E', chord: 'Emaj7' },
+            { time: 202.98, key: 'F', chord: 'Fmaj7' },
+            { time: 203.38, key: 'Db', chord: 'Dbmaj7' },
+            { time: 203.78, key: 'G', chord: 'Gmaj7' },
+            { time: 204.17, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 204.58, key: 'B', chord: 'Bmaj7' },
+            { time: 204.99, key: 'D', chord: 'Dmaj7' },
+            { time: 205.37, key: 'Db', chord: 'Dbmaj7' },
+            { time: 205.78, key: 'D', chord: 'Dmaj7' },
+            { time: 206.18, key: 'Ab', chord: 'Abmaj7' },
+            { time: 206.58, key: 'D', chord: 'Dmaj7' },
+            { time: 206.97, key: 'F#', chord: 'F#maj7' },
+            { time: 207.37, key: 'E', chord: 'Emaj7' },
+            { time: 207.77, key: 'E', chord: 'Emaj7' },
+            { time: 208.17, key: 'G', chord: 'Gmaj7' },
+            { time: 208.56, key: 'G', chord: 'Gmaj7' },
+            { time: 208.96, key: 'G', chord: 'Gmaj7' },
+            { time: 209.36, key: 'B', chord: 'Bmaj7' },
+            { time: 209.76, key: 'Ab', chord: 'Abmaj7' },
+            { time: 210.15, key: 'Db', chord: 'Dbmaj7' },
+            { time: 210.55, key: 'F', chord: 'Fmaj7' },
+            { time: 210.94, key: 'A', chord: 'Amaj7' },
+            { time: 211.34, key: 'C', chord: 'Cmaj7' },
+            { time: 211.73, key: 'C', chord: 'Cmaj7' },
+            { time: 212.13, key: 'G', chord: 'Gmaj7' },
+            { time: 212.53, key: 'F#', chord: 'F#maj7' },
+            { time: 212.93, key: 'E', chord: 'Emaj7' },
+            { time: 213.32, key: 'B', chord: 'Bmaj7' },
+            { time: 213.72, key: 'B', chord: 'Bmaj7' },
+            { time: 214.12, key: 'A', chord: 'Amaj7' },
+            { time: 214.52, key: 'Db', chord: 'Dbmaj7' },
+            { time: 214.91, key: 'Db', chord: 'Dbmaj7' },
+            { time: 215.31, key: 'Ab', chord: 'Abmaj7' },
+            { time: 215.71, key: 'F', chord: 'Fmaj7' },
+            { time: 216.11, key: 'E', chord: 'Emaj7' },
+            { time: 216.51, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 216.90, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 217.30, key: 'B', chord: 'Bmaj7' },
+            { time: 217.69, key: 'D', chord: 'Dmaj7' },
+            { time: 218.08, key: 'D', chord: 'Dmaj7' },
+            { time: 218.49, key: 'D', chord: 'Dmaj7' },
+            { time: 218.88, key: 'Ab', chord: 'Abmaj7' },
+            { time: 219.29, key: 'D', chord: 'Dmaj7' },
+            { time: 219.67, key: 'F#', chord: 'F#maj7' },
+            { time: 220.08, key: 'B', chord: 'Bmaj7' },
+            { time: 220.46, key: 'E', chord: 'Emaj7' },
+            { time: 220.87, key: 'G', chord: 'Gmaj7' },
+            { time: 221.25, key: 'G', chord: 'Gmaj7' },
+            { time: 221.66, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 222.05, key: 'F', chord: 'Fmaj7' },
+            { time: 222.45, key: 'F#', chord: 'F#maj7' },
+            { time: 222.84, key: 'F', chord: 'Fmaj7' },
+            { time: 223.24, key: 'F', chord: 'Fmaj7' },
+            { time: 223.63, key: 'A', chord: 'Amaj7' },
+            { time: 224.03, key: 'C', chord: 'Cmaj7' },
+            { time: 224.42, key: 'G', chord: 'Gmaj7' },
+            { time: 224.80, key: 'B', chord: 'Bmaj7' },
+            { time: 225.18, key: 'B', chord: 'Bmaj7' },
+            { time: 225.55, key: 'E', chord: 'Emaj7' },
+            { time: 225.93, key: 'F', chord: 'Fmaj7' },
+            { time: 226.31, key: 'A', chord: 'Amaj7' },
+            { time: 226.73, key: 'D', chord: 'Dmaj7' },
+            { time: 227.17, key: 'Db', chord: 'Dbmaj7' },
+            { time: 227.58, key: 'Db', chord: 'Dbmaj7' },
+            { time: 227.96, key: 'E', chord: 'Emaj7' },
+            { time: 228.36, key: 'F', chord: 'Fmaj7' },
+            { time: 228.76, key: 'B', chord: 'Bmaj7' },
+            { time: 229.15, key: 'G', chord: 'Gmaj7' },
+            { time: 229.54, key: 'B', chord: 'Bmaj7' },
+            { time: 229.95, key: 'B', chord: 'Bmaj7' },
+            { time: 230.34, key: 'Ab', chord: 'Abmaj7' },
+            { time: 230.75, key: 'Db', chord: 'Dbmaj7' },
+            { time: 231.14, key: 'D', chord: 'Dmaj7' },
+            { time: 231.55, key: 'A', chord: 'Amaj7' },
+            { time: 231.91, key: 'B', chord: 'Bmaj7' },
+            { time: 232.35, key: 'B', chord: 'Bmaj7' },
+            { time: 232.77, key: 'B', chord: 'Bmaj7' },
+            { time: 233.15, key: 'E', chord: 'Emaj7' },
+            { time: 233.57, key: 'B', chord: 'Bmaj7' },
+            { time: 233.98, key: 'C', chord: 'Cmaj7' },
+            { time: 234.38, key: 'G', chord: 'Gmaj7' },
+            { time: 234.79, key: 'B', chord: 'Bmaj7' },
+            { time: 235.19, key: 'D', chord: 'Dmaj7' },
+            { time: 235.60, key: 'Db', chord: 'Dbmaj7' },
+            { time: 235.97, key: 'D', chord: 'Dmaj7' },
+            { time: 236.40, key: 'A', chord: 'Amaj7' },
+            { time: 236.82, key: 'C', chord: 'Cmaj7' },
+            { time: 237.22, key: 'G', chord: 'Gmaj7' },
+            { time: 237.78, key: 'B', chord: 'Bmaj7' },
+            { time: 238.19, key: 'E', chord: 'Emaj7' },
+            { time: 238.64, key: 'B', chord: 'Bmaj7' },
+            { time: 239.05, key: 'A', chord: 'Amaj7' },
+            { time: 239.46, key: 'Ab', chord: 'Abmaj7' },
+            { time: 239.86, key: 'Db', chord: 'Dbmaj7' },
+            { time: 240.26, key: 'F#', chord: 'F#maj7' },
+            { time: 240.66, key: 'E', chord: 'Emaj7' },
+            { time: 241.05, key: 'B', chord: 'Bmaj7' },
+            { time: 241.38, key: 'F', chord: 'Fmaj7' },
+            { time: 241.77, key: 'B', chord: 'Bmaj7' },
+            { time: 242.18, key: 'G', chord: 'Gmaj7' },
+            { time: 242.57, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 242.97, key: 'B', chord: 'Bmaj7' },
+            { time: 243.37, key: 'Ab', chord: 'Abmaj7' },
+            { time: 243.79, key: 'Db', chord: 'Dbmaj7' },
+            { time: 244.20, key: 'D', chord: 'Dmaj7' },
+            { time: 244.69, key: 'C', chord: 'Cmaj7' },
+            { time: 245.09, key: 'B', chord: 'Bmaj7' },
+            { time: 245.49, key: 'E', chord: 'Emaj7' },
+            { time: 245.82, key: 'B', chord: 'Bmaj7' },
+            { time: 246.17, key: 'E', chord: 'Emaj7' },
+            { time: 246.51, key: 'G', chord: 'Gmaj7' },
+            { time: 246.92, key: 'B', chord: 'Bmaj7' },
+            { time: 247.33, key: 'G', chord: 'Gmaj7' },
+            { time: 247.73, key: 'B', chord: 'Bmaj7' },
+            { time: 248.15, key: 'Ab', chord: 'Abmaj7' },
+            { time: 248.56, key: 'F', chord: 'Fmaj7' },
+            { time: 248.96, key: 'D', chord: 'Dmaj7' },
+            { time: 249.37, key: 'A', chord: 'Amaj7' },
+            { time: 249.78, key: 'C', chord: 'Cmaj7' },
+            { time: 250.18, key: 'G', chord: 'Gmaj7' },
+            { time: 250.59, key: 'B', chord: 'Bmaj7' },
+            { time: 251.12, key: 'B', chord: 'Bmaj7' },
+            { time: 251.54, key: 'F#', chord: 'F#maj7' },
+            { time: 251.98, key: 'A', chord: 'Amaj7' },
+            { time: 252.44, key: 'Ab', chord: 'Abmaj7' },
+            { time: 252.84, key: 'Db', chord: 'Dbmaj7' },
+            { time: 253.21, key: 'Db', chord: 'Dbmaj7' },
+            { time: 253.71, key: 'Ab', chord: 'Abmaj7' },
+            { time: 254.14, key: 'F#', chord: 'F#maj7' },
+            { time: 254.58, key: 'A', chord: 'Amaj7' },
+            { time: 254.99, key: 'G', chord: 'Gmaj7' },
+            { time: 255.37, key: 'B', chord: 'Bmaj7' },
+            { time: 255.84, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 256.26, key: 'F#', chord: 'F#maj7' },
+            { time: 256.67, key: 'D', chord: 'Dmaj7' },
+            { time: 257.02, key: 'Db', chord: 'Dbmaj7' },
+            { time: 257.43, key: 'D', chord: 'Dmaj7' },
+            { time: 257.83, key: 'C', chord: 'Cmaj7' },
+            { time: 258.26, key: 'Db', chord: 'Dbmaj7' },
+            { time: 258.69, key: 'E', chord: 'Emaj7' },
+            { time: 259.11, key: 'Db', chord: 'Dbmaj7' },
+            { time: 259.51, key: 'Ab', chord: 'Abmaj7' },
+            { time: 259.92, key: 'G', chord: 'Gmaj7' },
+            { time: 260.34, key: 'B', chord: 'Bmaj7' },
+            { time: 260.76, key: 'F', chord: 'Fmaj7' },
+            { time: 261.18, key: 'B', chord: 'Bmaj7' },
+            { time: 261.60, key: 'Ab', chord: 'Abmaj7' },
+            { time: 262.01, key: 'F', chord: 'Fmaj7' },
+            { time: 262.48, key: 'Ab', chord: 'Abmaj7' },
+            { time: 262.92, key: 'D', chord: 'Dmaj7' },
+            { time: 263.29, key: 'C', chord: 'Cmaj7' },
+            { time: 263.78, key: 'G', chord: 'Gmaj7' },
+            { time: 264.22, key: 'Db', chord: 'Dbmaj7' },
+            { time: 264.65, key: 'Ab', chord: 'Abmaj7' },
+            { time: 265.07, key: 'F#', chord: 'F#maj7' },
+            { time: 265.46, key: 'A', chord: 'Amaj7' },
+            { time: 265.93, key: 'Ab', chord: 'Abmaj7' },
+            { time: 266.37, key: 'Db', chord: 'Dbmaj7' },
+            { time: 266.75, key: 'C', chord: 'Cmaj7' },
+            { time: 267.22, key: 'Ab', chord: 'Abmaj7' },
+            { time: 267.62, key: 'F#', chord: 'F#maj7' },
+            { time: 268.07, key: 'A', chord: 'Amaj7' },
+            { time: 268.49, key: 'G', chord: 'Gmaj7' },
+            { time: 268.88, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 269.31, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 269.73, key: 'F#', chord: 'F#maj7' },
+            { time: 270.16, key: 'Ab', chord: 'Abmaj7' },
+            { time: 270.61, key: 'F', chord: 'Fmaj7' },
+            { time: 271.02, key: 'D', chord: 'Dmaj7' },
+            { time: 271.46, key: 'B', chord: 'Bmaj7' },
+            { time: 271.87, key: 'Db', chord: 'Dbmaj7' },
+            { time: 272.29, key: 'Db', chord: 'Dbmaj7' },
+            { time: 272.78, key: 'E', chord: 'Emaj7' },
+            { time: 273.19, key: 'G', chord: 'Gmaj7' },
+            { time: 273.64, key: 'Bb', chord: 'Bbmaj7' },
+            { time: 274.07, key: 'G', chord: 'Gmaj7' },
+            { time: 274.49, key: 'F', chord: 'Fmaj7' },
+            { time: 274.92, key: 'F#', chord: 'F#maj7' },
+            { time: 275.37, key: 'F', chord: 'Fmaj7' },
+            { time: 275.71, key: 'A', chord: 'Amaj7' },
+            { time: 276.13, key: 'A', chord: 'Amaj7' },
+            { time: 276.55, key: 'A', chord: 'Amaj7' },
+            { time: 276.96, key: 'A', chord: 'Amaj7' },
+            { time: 277.36, key: 'F', chord: 'Fmaj7' },
+            { time: 277.78, key: 'A', chord: 'Amaj7' },
+            { time: 278.20, key: 'A', chord: 'Amaj7' },
+            { time: 278.60, key: 'E', chord: 'Emaj7' },
+            { time: 279.00, key: 'E', chord: 'Emaj7' },
+            { time: 279.38, key: 'A', chord: 'Amaj7' },
+            { time: 279.78, key: 'A', chord: 'Amaj7' },
+            { time: 280.16, key: 'A', chord: 'Amaj7' },
+            { time: 280.54, key: 'F', chord: 'Fmaj7' },
+            { time: 280.94, key: 'F', chord: 'Fmaj7' },
+            { time: 281.36, key: 'B', chord: 'Bmaj7' },
+            { time: 281.73, key: 'B', chord: 'Bmaj7' },
+            { time: 282.10, key: 'B', chord: 'Bmaj7' },
+            { time: 282.51, key: 'Eb', chord: 'Ebmaj7' },
+            { time: 282.91, key: 'Eb', chord: 'Ebmaj7' },
+        ];
+
+
+
+        // ========== 音频控制 ==========
+        let audioElement;
+        let isPlaying = false;
+        let animationFrame;
+
+        function initAudio() {
+            audioElement = document.getElementById('audio-player');
+            document.body.addEventListener('click', initAudioContext, { once: true });
+        }
+
+        function initAudioContext() {
+            new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            isPlaying ? audioElement.play() : audioElement.pause();
+            if (isPlaying) startVisualization();
+            else cancelAnimationFrame(animationFrame);
+        }
+
+        // ========== 可视化系统 ==========
+        let canvas, ctx;
+
+        function initCanvas() {
+            canvas = document.getElementById('circle-canvas');
+            ctx = canvas.getContext('2d');
+            drawCircle();
+        }
+
+        function drawCircle(currentKey) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const angleStep = (2 * Math.PI) / CIRCLE_CONFIG.keys.length;
+
+            CIRCLE_CONFIG.keys.forEach((key, index) => {
+                const angle = angleStep * index - Math.PI / 2;
+                const x = CIRCLE_CONFIG.center.x + Math.cos(angle) * CIRCLE_CONFIG.radius;
+                const y = CIRCLE_CONFIG.center.y + Math.sin(angle) * CIRCLE_CONFIG.radius;
+
+                // 连接线
+                ctx.beginPath();
+                ctx.moveTo(CIRCLE_CONFIG.center.x, CIRCLE_CONFIG.center.y);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+
+                // 节点主体
+                ctx.beginPath();
+                ctx.arc(x, y, 20, 0, 2 * Math.PI);
+                ctx.fillStyle = key === currentKey ? CIRCLE_CONFIG.colors.active : CIRCLE_CONFIG.colors.inactive;
+                ctx.shadowColor = key === currentKey ? CIRCLE_CONFIG.colors.active : 'transparent';
+                ctx.shadowBlur = key === currentKey ? 10 : 0;
+                ctx.fill();
+
+                // 文字
+                ctx.fillStyle = key === currentKey ? 'rgba(0,0,0,0.9)' : 'rgba(255,255,255,0.8)';
+                ctx.font = `500 ${key === currentKey ? '15px' : '13px'} Inter`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(key, x, y);
+            });
+        }
+
+        function updateVisualization() {
+            const currentTime = audioElement.currentTime;
+            const duration = audioElement.duration;
+            document.getElementById('current-time').textContent = currentTime.toFixed(2);
+
+            const currentChord = CHORD_CHANGES.reduce((acc, cur) =>
+                cur.time <= currentTime ? cur : acc, CHORD_CHANGES[0]);
+
+            document.getElementById('current-key').textContent = currentChord.key;
+
+            const pathElement = document.getElementById('progression-path');
+            pathElement.textContent = CHORD_CHANGES
+                .filter(c => c.time <= currentTime)
+                .map(c => c.key)
+                .join(' → ');
+
+            drawCircle(currentChord.key);
+
+            animationFrame = requestAnimationFrame(updateVisualization);
+        }
+
+        function startVisualization() {
+            cancelAnimationFrame(animationFrame);
+            updateVisualization();
+        }
+
+        // ========== 初始化 ==========
+        window.onload = () => {
+            initAudio();
+            initCanvas();
+        };
+    </script>
+</body>
+
+</html>

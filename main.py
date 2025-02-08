@@ -7,20 +7,153 @@ from sklearn.decomposition import PCA
 
 # 音乐理论配置
 CLUSTER_MAP = {
-    # 和弦仅为演示，未具体分析
-    0: {"key": "C", "chords": ["Cmaj7", "G7", "Am7"]},
-    1: {"key": "G", "chords": ["Gmaj7", "D7", "Em7"]},
-    2: {"key": "D", "chords": ["Dmaj7", "A7", "Bm7"]},
-    3: {"key": "A", "chords": ["Amaj7", "E7", "F#m7"]},
-    4: {"key": "E", "chords": ["Emaj7", "B7", "C#m7"]},
-    5: {"key": "B", "chords": ["Bmaj7", "F#7", "G#m7"]},
-    6: {"key": "F#", "chords": ["F#maj7", "C#7", "D#m7"]},
-    7: {"key": "Db", "chords": ["Dbmaj7", "Ab7", "Bdim7"]},
-    8: {"key": "Ab", "chords": ["Abmaj7", "Eb7", "Fm7"]},
-    9: {"key": "Eb", "chords": ["Ebmaj7", "Bb7", "Cdim7"]},
-    10: {"key": "Bb", "chords": ["Bbmaj7", "F7", "Gdim7"]},
-    11: {"key": "F", "chords": ["Fmaj7", "C7", "Ddim7"]},
+    # 五度圈顺时针排列（升号方向）
+    0: {  # C Major
+        "key": "C",
+        "chords": [
+            "Cmaj7",        # I级
+            "G7alt",        # V7 (含b9/#9/b5/#5变化)
+            "A7#11",        # 三全音替代D7 (II-V-I进行)
+            "Ebmaj7",       # Coltrane变化关联和弦
+            "F#dim7",       # 对称减和弦过渡
+            "Bb7sus4"       # 三全音替代E7
+        ],
+        "function": "Tonic"
+    },
+    1: {  # G Major
+        "key": "G",
+        "chords": [
+            "Gmaj7",
+            "D7#9",         # 含布鲁斯音阶特征
+            "B7alt",        # 三全音替代F7
+            "Abmaj7",       # 来自Eb调关联
+            "C#dim7",
+            "F7b13"
+        ],
+        "function": "Dominant"
+    },
+    2: {  # D Major
+        "key": "D",
+        "chords": [
+            "Dmaj7",
+            "A7#5",
+            "F7alt",        # 三全音替代B7
+            "Bbmaj7",       # 远关系和弦
+            "Ebdim7",
+            "G7#11"
+        ],
+        "function": "Subdominant"
+    },
+    3: {  # A Major
+        "key": "A",
+        "chords": [
+            "Amaj7",
+            "E7+9",
+            "C7alt",        # 三全音替代Gb7
+            "Dbmaj7",       # Coltrane三调系统
+            "Fdim7",
+            "Bb7#5"
+        ],
+        "function": "Modulation Bridge"
+    },
+    4: {  # E Major
+        "key": "E",
+        "chords": [
+            "Emaj7",
+            "B7b9",
+            "G7alt",        # 三全音替代Db7
+            "Abmaj7",       # 三度关系调
+            "Bbdim7",
+            "D7#9"
+        ],
+        "function": "Tritone Shift"
+    },
+    5: {  # B Major (Coltrane主调1)
+        "key": "B",
+        "chords": [
+            "Bmaj7",        # 主和弦
+            "F#7alt",       # V7/III
+            "Eb7#11",       # 三全音替代A7
+            "Gmaj7",        # 关联调
+            "C#dim7",       # 过渡和弦
+            "D7b5"          # 德国增六和弦
+        ],
+        "function": "Primary Tonic"
+    },
+    6: {  # F# Major
+        "key": "F#",
+        "chords": [
+            "F#maj7",
+            "C#7+11",
+            "A7alt",        # 三全音替代Eb7
+            "Bbmaj7",       # 三全音关系
+            "Ddim7",
+            "E7#9"
+        ],
+        "function": "Pivot Modulation"
+    },
+    7: {  # C# Major (等价Db)
+        "key": "C#",
+        "chords": [
+            "C#maj7",
+            "G#7alt",
+            "F7#11",        # 三全音替代B7
+            "Emaj7",        # 远关系调
+            "Gdim7",
+            "A7b13"
+        ],
+        "function": "Enharmonic Gateway"
+    },
+    8: {  # G# Major (等价Ab)
+        "key": "Ab",
+        "chords": [
+            "Abmaj7",
+            "Eb7b9",
+            "C7alt",        # 三全音替代F#7
+            "Bmaj7",        # Coltrane三调关联
+            "Dbdim7",
+            "F7#5"
+        ],
+        "function": "Secondary Dominant"
+    },
+    9: {  # D# Major (等价Eb)
+        "key": "Eb",
+        "chords": [
+            "Ebmaj7",       # Coltrane主调3
+            "Bb7#9",
+            "G7alt",        # 三全音替代C#7
+            "Amaj7",        # 三度关系
+            "Fdim7",
+            "D7alt"         # 三全音替代Ab7
+        ],
+        "function": "Tertiary Tonic"
+    },
+    10: {  # A# Major (等价Bb)
+        "key": "Bb",
+        "chords": [
+            "Bbmaj7",
+            "F7alt",
+            "D7#11",        # 三全音替代Ab7
+            "Gbmaj7",       # 等音调
+            "Adim7",
+            "C7b9"
+        ],
+        "function": "Dominant Preparation"
+    },
+    11: {  # F Major
+        "key": "F",
+        "chords": [
+            "Fmaj7",
+            "C7+11",
+            "A7alt",        # 三全音替代Eb7
+            "Dmaj7",        # 三全音关联
+            "G#dim7",
+            "Bb7#9"
+        ],
+        "function": "Cycle Completion"
+    }
 }
+
 
 
 def analyze_giant_steps(audio_path):

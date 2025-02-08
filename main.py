@@ -93,7 +93,7 @@ CLUSTER_MAP = {
         "function": "Pivot Modulation"
     },
     7: {  # C# Major (等价Db)
-        "key": "C#",
+        "key": "Db",
         "chords": [
             "C#maj7",
             "G#7alt",
